@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4f46e5">
+    <title>Magiczna Kraina Mnożenia</title>
+    
+    <!-- Ikona dla Androida (uproszczona przez Emoji) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⭐</text></svg>">
+
+    <!-- Web Manifest Inline -->
+    <link rel="manifest" id="manifest-placeholder">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+            touch-action: manipulation;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .card {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 2rem;
+        }
+
+        .correct-flash {
+            animation: flash 0.5s ease-out;
+        }
+
+        @keyframes flash {
+            0% { background-color: transparent; }
+            50% { background-color: #4ade80; }
+            100% { background-color: transparent; }
+        }
+
+        .number-btn {
+            transition: all 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .number-btn:active {
+            transform: scale(0.95);
+            background-color: #f3f4f6;
+        }
+
+        /* Stylizacja dla trybu Standalone (PWA) */
+        @media all and (display-mode: standalone) {
+            body { padding-top: env(safe-area-inset-top); }
+        }
+    </style>
+</head>
+<body class="h-screen flex items-center justify-center p-4">
+
+    <div id="game-container" class="w-full max-w-md bg-white card p-6 text-center relative overflow-hidden">
+        <!-- Pasek postępu -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gray-100">
+            <div id="progress" class="h-full bg-yellow-400 transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <!-- Nagłówek -->
+        <div class="flex justify-between items-center mb-4 mt-2">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">⭐</span>
+                <span id="score" class="text-2xl font-bold text-yellow-600">0</span>
+            </div>
+            <div id="level-display" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
+                Poziom 1
+            </div>
+        </div>
+
+        <!-- Obszar pytania -->
+        <div id="question-box" class="py-6 transition-all duration-300">
+            <h2 class="text-sm text-gray-500 font-medium mb-1 uppercase tracking-widest">Ile to jest?</h2>
+            <div class="flex justify-center items-center space-x-4">
+                <span id="num1" class="text-6xl font-extrabold text-indigo-600">?</span>
+                <span class="text-4xl font-bold text-gray-300">×</span>
+                <span id="num2" class="text-6xl font-extrabold text-indigo-600">?</span>
+            </div>
+        </div>
+
+        <!-- Informacja zwrotna -->
+        <div id="feedback-container" class="h-16 flex flex-col items-center justify-center mb-2">
+            <div id="feedback" class="font-bold text-lg transition-all duration-300 opacity-0">
+                Świetnie! 🌟
+            </div>
+            <button id="next-btn" onclick="generateQuestion()" class="hidden mt-1 bg-green-500 text-white px-8 py-2 rounded-full font-bold shadow-lg animate-pulse">
+                Idź dalej ➔
+            </button>
+        </div>
+
+        <!-- Wyświetlacz wprowadzania -->
+        <div id="input-display" class="text-4xl font-bold text-gray-800 mb-4 min-h-[3.5rem] flex items-center justify-center tracking-widest bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+            ?
+        </div>
+
+        <!-- Klawiatura numeryczna -->
+        <div class="grid grid-cols-3 gap-3">
+            <button onclick="addDigit(1)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">1</button>
+            <button onclick="addDigit(2)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">2</button>
+            <button onclick="addDigit(3)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">3</button>
+            <button onclick="addDigit(4)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">4</button>
+            <button onclick="addDigit(5)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">5</button>
+            <button onclick="addDigit(6)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">6</button>
+            <button onclick="addDigit(7)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">7</button>
+            <button onclick="addDigit(8)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">8</button>
+            <button onclick="addDigit(9)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">9</button>
+            <button onclick="clearInput()" class="number-btn bg-red-50 py-4 rounded-2xl text-xl font-bold text-red-500">C</button>
+            <button onclick="addDigit(0)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">0</button>
+            <button onclick="checkAnswer()" class="number-btn bg-indigo-600 py-4 rounded-2xl text-xl font-bold text-white shadow-lg active:bg-indigo-800">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIKA PWA (WYMAGANA DLA PRZYCISKU INSTALACJI) ---
+        const manifest = {
+            "name": "Magiczna Kraina Mnożenia",
+            "short_name": "Mnożenie",
+            "start_url": "./mnozenie_app.html",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#4f46e5",
+            "icons": [{
+                "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%234f46e5'/><text y='.9em' x='5' font-size='80'>⭐</text></svg>",
+                "sizes": "192x192",
+                "type": "image/svg+xml"
+            }]
+        };
+        const manifestStr = JSON.stringify(manifest);
+        const blob = new Blob([manifestStr], {type: 'application/json'});
+        document.getElementById('manifest-placeholder').setAttribute('href', URL.createObjectURL(blob));
+
+        // Rejestracja Service Workera
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => self.skipWaiting());
+                self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => {})));
+            `;
+            const swBlob = new Blob([swCode], {type: 'application/javascript'});
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(sw
