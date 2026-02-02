@@ -8,9 +8,7 @@
     <meta name="theme-color" content="#4f46e5">
     <title>Magiczna Kraina Mnożenia</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⭐</text></svg>">
-    
     <link rel="manifest" href="manifest.json">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
@@ -18,23 +16,20 @@
         .card { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border-radius: 2rem; }
         .number-btn { transition: all 0.1s ease; -webkit-tap-highlight-color: transparent; }
         .number-btn:active { transform: scale(0.95); background-color: #f3f4f6; }
-        @media all and (display-mode: standalone) { body { padding-top: env(safe-area-inset-top); } }
     </style>
 </head>
 <body class="h-screen flex items-center justify-center p-4">
 
     <div id="game-container" class="w-full max-w-md bg-white card p-6 text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-2 bg-gray-100">
-            <div id="progress" class="h-full bg-yellow-400 transition-all duration-500" style="width: 0%"></div>
-        </div>
         <div class="flex justify-between items-center mb-4 mt-2">
             <div class="flex items-center space-x-2">
                 <span class="text-2xl">⭐</span>
                 <span id="score" class="text-2xl font-bold text-yellow-600">0</span>
             </div>
-            <div id="level-display" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">Poziom 1</div>
+            <div id="level-display" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">Poziom: Ekspert</div>
         </div>
-        <div id="question-box" class="py-6 transition-all duration-300">
+
+        <div id="question-box" class="py-6">
             <h2 class="text-sm text-gray-500 font-medium mb-1 uppercase tracking-widest">Ile to jest?</h2>
             <div class="flex justify-center items-center space-x-4">
                 <span id="num1" class="text-6xl font-extrabold text-indigo-600">?</span>
@@ -42,11 +37,17 @@
                 <span id="num2" class="text-6xl font-extrabold text-indigo-600">?</span>
             </div>
         </div>
-        <div id="feedback-container" class="h-16 flex flex-col items-center justify-center mb-2">
-            <div id="feedback" class="font-bold text-lg transition-all duration-300 opacity-0">Świetnie! 🌟</div>
+
+        <div id="feedback-container" class="h-20 flex flex-col items-center justify-center mb-2">
+            <div id="feedback" class="font-bold text-lg transition-all duration-300 opacity-0"></div>
+            <button id="next-btn" onclick="generateQuestion()" class="hidden mt-2 bg-green-500 text-white px-8 py-2 rounded-full font-bold shadow-lg">
+                Idź dalej ➔
+            </button>
         </div>
+
         <div id="input-display" class="text-4xl font-bold text-gray-800 mb-4 min-h-[3.5rem] flex items-center justify-center tracking-widest bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">?</div>
-        <div class="grid grid-cols-3 gap-3">
+
+        <div id="keyboard" class="grid grid-cols-3 gap-3">
             <button onclick="addDigit(1)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">1</button>
             <button onclick="addDigit(2)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">2</button>
             <button onclick="addDigit(3)" class="number-btn bg-white border-2 border-gray-100 py-4 rounded-2xl text-2xl font-bold text-gray-700">3</button>
@@ -63,30 +64,78 @@
     </div>
 
     <script>
-        // Logika gry (uproszczona)
-        let score = 0; let currentAnswer = ''; let n1, n2;
+        let score = 0;
+        let currentInput = '';
+        let n1, n2, attempts;
+
         function generateQuestion() {
-            n1 = Math.floor(Math.random() * 9) + 1;
-            n2 = Math.floor(Math.random() * 9) + 1;
+            // Zakres 2-9 eliminuje banalne mnożenie przez 1 i 10
+            n1 = Math.floor(Math.random() * 8) + 2;
+            n2 = Math.floor(Math.random() * 8) + 2;
+            attempts = 0;
+            currentInput = '';
+            
             document.getElementById('num1').innerText = n1;
             document.getElementById('num2').innerText = n2;
-            currentAnswer = ''; updateDisplay();
+            document.getElementById('feedback').classList.add('opacity-0');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('keyboard').style.pointerEvents = 'auto';
+            document.getElementById('keyboard').style.opacity = '1';
+            updateDisplay();
         }
-        function addDigit(d) { currentAnswer += d; updateDisplay(); }
-        function clearInput() { currentAnswer = ''; updateDisplay(); }
-        function updateDisplay() { document.getElementById('input-display').innerText = currentAnswer || '?'; }
-        function checkAnswer() {
-            if (parseInt(currentAnswer) === n1 * n2) {
-                score++; document.getElementById('score').innerText = score;
-                generateQuestion();
-            } else { clearInput(); }
-        }
-        generateQuestion();
 
-        // REJESTRACJA SERVICE WORKERA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+        function addDigit(d) {
+            if (currentInput.length < 3) currentInput += d;
+            updateDisplay();
         }
+
+        function clearInput() {
+            currentInput = '';
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('input-display').innerText = currentInput || '?';
+        }
+
+        function checkAnswer() {
+            const correctResult = n1 * n2;
+            const userResult = parseInt(currentInput);
+            const feedbackEl = document.getElementById('feedback');
+
+            if (userResult === correctResult) {
+                score++;
+                document.getElementById('score').innerText = score;
+                feedbackEl.innerText = "Brawo! 🌟";
+                feedbackEl.className = "font-bold text-lg text-green-500 transition-all";
+                feedbackEl.classList.remove('opacity-0');
+                
+                // Automatyczne nowe pytanie po 1 sekundzie przy dobrej odpowiedzi
+                setTimeout(generateQuestion, 1000);
+            } else {
+                attempts++;
+                currentInput = '';
+                updateDisplay();
+                
+                if (attempts >= 3) {
+                    feedbackEl.innerText = `Poprawny wynik to: ${correctResult}`;
+                    feedbackEl.className = "font-bold text-lg text-red-500 transition-all";
+                    feedbackEl.classList.remove('opacity-0');
+                    
+                    // Pokazujemy przycisk "Idź dalej" i blokujemy klawiaturę
+                    document.getElementById('next-btn').classList.remove('hidden');
+                    document.getElementById('keyboard').style.pointerEvents = 'none';
+                    document.getElementById('keyboard').style.opacity = '0.5';
+                } else {
+                    feedbackEl.innerText = `Spróbuj jeszcze raz! (Błędy: ${attempts}/3)`;
+                    feedbackEl.className = "font-bold text-sm text-orange-500 transition-all";
+                    feedbackEl.classList.remove('opacity-0');
+                }
+            }
+        }
+
+        generateQuestion();
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
     </script>
 </body>
 </html>
