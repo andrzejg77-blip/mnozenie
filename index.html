@@ -16,20 +16,28 @@
         .card { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border-radius: 2rem; }
         .number-btn { transition: all 0.1s ease; -webkit-tap-highlight-color: transparent; }
         .number-btn:active { transform: scale(0.95); background-color: #f3f4f6; }
+        .correct-flash { animation: flash 0.5s ease-out; }
+        @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #4ade80; } 100% { background-color: transparent; } }
     </style>
 </head>
 <body class="h-screen flex items-center justify-center p-4">
 
     <div id="game-container" class="w-full max-w-md bg-white card p-6 text-center relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-2 bg-gray-100">
+            <div id="progress" class="h-full bg-yellow-400 transition-all duration-500" style="width: 0%"></div>
+        </div>
+
         <div class="flex justify-between items-center mb-4 mt-2">
             <div class="flex items-center space-x-2">
                 <span class="text-2xl">⭐</span>
                 <span id="score" class="text-2xl font-bold text-yellow-600">0</span>
             </div>
-            <div id="level-display" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">Poziom: Ekspert</div>
+            <div id="level-display" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
+                Poziom 1
+            </div>
         </div>
 
-        <div id="question-box" class="py-6">
+        <div id="question-box" class="py-6 transition-all duration-300">
             <h2 class="text-sm text-gray-500 font-medium mb-1 uppercase tracking-widest">Ile to jest?</h2>
             <div class="flex justify-center items-center space-x-4">
                 <span id="num1" class="text-6xl font-extrabold text-indigo-600">?</span>
@@ -38,9 +46,9 @@
             </div>
         </div>
 
-        <div id="feedback-container" class="h-20 flex flex-col items-center justify-center mb-2">
+        <div id="feedback-container" class="h-16 flex flex-col items-center justify-center mb-2">
             <div id="feedback" class="font-bold text-lg transition-all duration-300 opacity-0"></div>
-            <button id="next-btn" onclick="generateQuestion()" class="hidden mt-2 bg-green-500 text-white px-8 py-2 rounded-full font-bold shadow-lg">
+            <button id="next-btn" onclick="generateQuestion()" class="hidden mt-1 bg-green-500 text-white px-8 py-2 rounded-full font-bold shadow-lg">
                 Idź dalej ➔
             </button>
         </div>
@@ -66,10 +74,11 @@
     <script>
         let score = 0;
         let currentInput = '';
-        let n1, n2, attempts;
+        let n1, n2, attempts, level = 1;
+        const questionsPerLevel = 10;
 
         function generateQuestion() {
-            // Zakres 2-9 eliminuje banalne mnożenie przez 1 i 10
+            // Zakres 2-9 eliminuje 1 i 10
             n1 = Math.floor(Math.random() * 8) + 2;
             n2 = Math.floor(Math.random() * 8) + 2;
             attempts = 0;
@@ -81,6 +90,7 @@
             document.getElementById('next-btn').classList.add('hidden');
             document.getElementById('keyboard').style.pointerEvents = 'auto';
             document.getElementById('keyboard').style.opacity = '1';
+            document.getElementById('game-container').classList.remove('correct-flash');
             updateDisplay();
         }
 
@@ -98,6 +108,17 @@
             document.getElementById('input-display').innerText = currentInput || '?';
         }
 
+        function updateProgress() {
+            const progress = (score % questionsPerLevel) / questionsPerLevel * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+            
+            const newLevel = Math.floor(score / questionsPerLevel) + 1;
+            if (newLevel !== level) {
+                level = newLevel;
+                document.getElementById('level-display').innerText = `Poziom ${level}`;
+            }
+        }
+
         function checkAnswer() {
             const correctResult = n1 * n2;
             const userResult = parseInt(currentInput);
@@ -106,28 +127,27 @@
             if (userResult === correctResult) {
                 score++;
                 document.getElementById('score').innerText = score;
-                feedbackEl.innerText = "Brawo! 🌟";
+                document.getElementById('game-container').classList.add('correct-flash');
+                feedbackEl.innerText = "Świetnie! 🌟";
                 feedbackEl.className = "font-bold text-lg text-green-500 transition-all";
                 feedbackEl.classList.remove('opacity-0');
                 
-                // Automatyczne nowe pytanie po 1 sekundzie przy dobrej odpowiedzi
-                setTimeout(generateQuestion, 1000);
+                updateProgress();
+                setTimeout(generateQuestion, 800);
             } else {
                 attempts++;
                 currentInput = '';
                 updateDisplay();
                 
                 if (attempts >= 3) {
-                    feedbackEl.innerText = `Poprawny wynik to: ${correctResult}`;
+                    feedbackEl.innerText = `Wynik to ${correctResult}`;
                     feedbackEl.className = "font-bold text-lg text-red-500 transition-all";
                     feedbackEl.classList.remove('opacity-0');
-                    
-                    // Pokazujemy przycisk "Idź dalej" i blokujemy klawiaturę
                     document.getElementById('next-btn').classList.remove('hidden');
                     document.getElementById('keyboard').style.pointerEvents = 'none';
                     document.getElementById('keyboard').style.opacity = '0.5';
                 } else {
-                    feedbackEl.innerText = `Spróbuj jeszcze raz! (Błędy: ${attempts}/3)`;
+                    feedbackEl.innerText = `Spróbuj jeszcze raz! (${attempts}/3)`;
                     feedbackEl.className = "font-bold text-sm text-orange-500 transition-all";
                     feedbackEl.classList.remove('opacity-0');
                 }
